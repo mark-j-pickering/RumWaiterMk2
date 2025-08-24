@@ -1,0 +1,13 @@
+{
+  "name": "rumwaiter-mk2",
+  "private": true,
+  "packageManager": "pnpm@9.6.0",
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm -r build && pnpm -C apps/sim-ui dev",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "lint": "echo 'linting stub'"
+  },
+  "version": "1.3.5"
+}
