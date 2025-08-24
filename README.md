@@ -5,8 +5,14 @@ It uses PNPM workspaces, TypeScript, Vite, and React. Packages are stubbed to co
 you an immediately runnable UI shell that shows the 50 kg preset and a simple simulated lift.
 
 ## Quick start
-1. Install Node 20+ and PNPM.
-2. Extract this zip, `cd rumwaiter-mk2-50kg`.
+1. Install **Node.js 22.x** (Current) and **PNPM 9.x**.  
+   - The project is locked to these versions in `.nvmrc` and `package.json` (`engines` field).  
+   - Run `node -v` and `pnpm -v` to confirm. You should see Node v22.x and PNPM v9.x.
+2. Clone/extract the repo and `cd simulator`.
+3. Run:
+   ```bash
+   pnpm install
+   pnpm dev
 3. Run:
    ```bash
    pnpm install
