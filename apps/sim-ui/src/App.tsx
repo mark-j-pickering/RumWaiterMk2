@@ -334,7 +334,7 @@ export default function App() {
             </div>
             <div className="stat">
               <h4>Extras</h4>
-              <div className="big">JAM: {jamActive ? 'ON' : 'OFF'} • Motion: {state.dir>0?'UP':state.dir<0?'DOWN':'STOP'}</div>
+              <div className="big">Motion: {state.dir>0?'UP':state.dir<0?'DOWN':'STOP'}</div>
             </div>
             <div className="stat">
               <h4>State</h4>
@@ -371,17 +371,10 @@ export default function App() {
               <span>Door open</span>
               <input type="checkbox" checked={doorOpen} onChange={e=>setDoorOpen(e.target.checked)} />
             </div>
-            
-            
             <div className="btns">
-              
-<div className="btns">
-  <button className="btn" onClick={() => onCmd('jam')}>
-    JAM
-  </button>
-</div>
-
-              
+              <button className={`btn ${jamActive ? "btn-red" : ""}`} onClick={() => onCmd('jam')}>
+                JAM
+              </button>
             </div>
             <div className="input"><span>Top switch (m)</span><input type="number" step="0.001" value={limitTopM} onChange={e=>setLimitTopM(+e.target.value)} /></div>
             <div className="input"><span>Bottom switch (m)</span><input type="number" step="0.001" value={limitBottomM} onChange={e=>setLimitBottomM(+e.target.value)} /></div>
@@ -396,7 +389,7 @@ export default function App() {
 
       <footer className="footer">
         <div>UI rev 4 • limit switches • hold-at-limits • accel + run clock</div>
-        <div>© RUMWaiter Mk2</div>
+        <div>© RUMWaiter Mk2 v1.3.7</div>
       </footer>
     </div>
   )

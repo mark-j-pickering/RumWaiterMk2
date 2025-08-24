@@ -1,0 +1,31 @@
+--- a/apps/sim-ui/src/App.tsx
++++ b/apps/sim-ui/src/App.tsx
+@@ -47,6 +47,7 @@
+   const [state, setState] = useState(Engine.initialState())
+   const [lap, setLap] = useState({active:false,startPos:0,moved:false})
+   const [runMs, setRunMs] = useState(0)
++  const [jamActive, setJamActive] = useState(false)
+ 
+   useEffect(() => {
+     const eng = new Engine()
+@@ -54,6 +55,8 @@
+     eng.onUpdate = setState
+-    engineRef.current = eng
++    eng.onJamStart = () => setJamActive(true)
++    eng.onJamDone = () => setJamActive(false)
++    engineRef.current = eng
+     eng.start()
+     return () => eng.stop()
+   }, [])
+@@ -210,7 +213,9 @@
+-        <button className="btn" onClick={() => onCmd('jam')}>JAM</button>
++        <button className={`btn ${jamActive ? "btn-red" : ""}`}
++                onClick={() => onCmd('jam')}>
++          JAM
++        </button>
+@@ -399,7 +404,7 @@
+-          <div className="big">JAM: {jamActive ? 'ON' : 'OFF'} • Motion: {state.dir>0?'UP':state.dir<0?'DOWN':'STOP'}</div>
++          <div className="big">Motion: {state.dir>0?'UP':state.dir<0?'DOWN':'STOP'}</div>
+@@ -510,7 +515,7 @@
+-        <div>© RUMWaiter Mk2</div>
++        <div>© RUMWaiter Mk2 v1.3.7</div>
