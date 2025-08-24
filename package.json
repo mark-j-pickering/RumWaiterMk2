@@ -2,6 +2,10 @@
   "name": "rumwaiter-mk2",
   "private": true,
   "packageManager": "pnpm@9.6.0",
+  "engines": {
+    "node": "22.x",
+    "pnpm": "9.x"
+  },
   "type": "module",
   "scripts": {
     "dev": "pnpm -r build && pnpm -C apps/sim-ui dev",

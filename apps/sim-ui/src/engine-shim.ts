@@ -16,7 +16,7 @@ export interface SimState {
   currentA: number
   duty: number
   dir: -1 | 0 | 1
-  trip: 'none' | 'soft' | 'hard' | 'door' | 'limit'
+  trip: 'none' | 'soft' | 'hard' | 'door' | 'limit' | 'RUNNING' | 'PAUSED' | 'JAM'
   limitTop: boolean
   limitBottom: boolean
 }
@@ -79,7 +79,7 @@ export class SimEngine {
 
   triggerJam() {
     if (this.jamTimer) return // already running
-    this.onJamStart?.()       // tell UI: button goes red
+    this.onJamStart?.()
     let start = Date.now()
     this.jamTimer = setInterval(() => {
       let dt = Date.now() - start
@@ -87,44 +87,75 @@ export class SimEngine {
       if (this.state.currentA >= this.hardTripA) {
         clearInterval(this.jamTimer)
         this.jamTimer = undefined
-        this.state.duty = 0
-        this.doJamBackout()
+        this.onJamDone?.()
       }
     }, 50)
   }
 
-  doJamBackout() {
-    this.state.duty = -0.2 // small reverse
-    setTimeout(() => {
-      this.state.duty = 0
-      this.state.currentA = 0
-      this.onJamDone?.() // tell UI: button resets
-    }, 300)
-  }
-
   tick(ms: number) {
-    this.state.t += ms
+    // --- Run time (only accumulate if moving and not at limits) ---
+    if (this.state.duty !== 0 && !this.state.limitTop && !this.state.limitBottom) {
+      this.state.t += ms
+    }
 
-    // Physics would normally update pos/vel/accel/current here...
-    // Example placeholder (replace with your real model if different):
+    // --- Physics updates ---
     this.state.posM += this.state.velMS * (ms / 1000)
     this.state.velMS += (this.state.duty * this.params.targetSpeedMS - this.state.velMS) * 0.1
     this.state.accelMS2 = (this.state.duty * this.params.targetSpeedMS - this.state.velMS)
 
-    // Direction flag
+    // --- Direction flag ---
     this.state.dir = this.state.duty > 0 ? 1 : this.state.duty < 0 ? -1 : 0
 
-    // Limit switches (simplified)
+    // --- Limit switches (simplified) ---
     const top = (this.params.limitTopM !== undefined) && (this.state.posM >= this.params.limitTopM)
     const bottom = (this.params.limitBottomM !== undefined) && (this.state.posM <= this.params.limitBottomM)
     this.state.limitTop = top || this.limitOverride.top
     this.state.limitBottom = bottom || this.limitOverride.bottom
 
-    // Current decay if idle (but not during jam ramp)
+    // --- Current model: gravity + dynamic error (hybrid lively model) ---
+    const g = 9.81
+    const eff = 0.8
+
+    const gravityForceN = this.params.massKg * g * (this.state.duty !== 0 ? 1 : 0)
+    const velError = (this.state.duty * this.params.targetSpeedMS - this.state.velMS)
+    const dynamicForceN = this.params.massKg * velError * 5   // gain tweak
+
+    const totalForceN = gravityForceN * this.state.dir + dynamicForceN
+    const targetCurrent = Math.abs(totalForceN / g) / eff
+
+    const tau = 0.1
+    this.state.currentA += (targetCurrent - this.state.currentA) * (ms / 1000) / tau
+
+    // --- Zero current if stopped at limits or duty off ---
+    if ((this.state.limitTop && this.state.dir > 0) ||
+        (this.state.limitBottom && this.state.dir < 0) ||
+        this.state.duty === 0) {
+      this.state.currentA = 0
+    }
+
+    // --- Current decay if idle (safety net, but not during jam ramp) ---
     if (this.state.duty === 0 && !this.jamTimer) {
       this.state.currentA = Math.max(this.state.currentA - 0.2, 0)
     }
 
+    // --- Motion state ---
+    let motion: 'RUNNING' | 'PAUSED' | 'JAM' = 'PAUSED'
+    if (this.jamTimer) {
+      motion = 'JAM'
+    } else if (this.state.duty !== 0 && !this.state.limitTop && !this.state.limitBottom) {
+      motion = 'RUNNING'
+    }
+    this.state.trip = motion
+
+    // --- Auto-stop condition ---
+    if (this.state.duty === 0 && Math.abs(this.state.velMS) < 1e-3 && !this.jamTimer) {
+      return
+    }
+
+    // Debug
+    console.log(`[Sim] t=${this.state.t}ms current=${this.state.currentA.toFixed(2)} A state=${motion}`)
+
+    // --- Emit update to UI ---
     this.onUpdate?.(this.state)
   }
 }

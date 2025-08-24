@@ -1,4 +1,3 @@
-
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { SimEngine, defaultParams } from './engine-shim'
 import { OLEDPanel as DevicesPanel } from './DevicesPanel'
@@ -16,7 +15,7 @@ function usePlotBuffer() {
   return { buf, push }
 }
 
-const VERSION = "1.3.5"
+const VERSION = "1.3.7"
 
 export default function App() {
   const dpAny = defaultParams as any
@@ -38,7 +37,7 @@ export default function App() {
   const [state, setState] = useState(() => ({
     t: 0, pos: 0, vel: 0, accel: 0, currentA: 0, duty: 0,
     dir: 0 as -1 | 0 | 1,
-    trip: 'none' as 'none' | 'soft' | 'hard' | 'door' | 'limit',
+    trip: 'none' as 'none' | 'soft' | 'hard' | 'door' | 'limit' | 'RUNNING' | 'PAUSED' | 'JAM',
     limitTop: false, limitBottom: false
   }))
 
@@ -73,7 +72,7 @@ export default function App() {
   useEffect(() => {
     engineRef.current = new (SimEngine as any)(makeParams())
     engineRef.current?.setDoorOpen(doorOpen)
-        setState(s => ({...s, t:0, pos:0, vel:0, accel:0, currentA:0, duty:0, dir:0, trip:'none'}))
+    setState(s => ({...s, t:0, pos:0, vel:0, accel:0, currentA:0, duty:0, dir:0, trip:'none'}))
     setRunMs(0); setLap({active:false, startPos:0, moved:false})
     buf.current = []
   }, [mass, speed, softTripA, hardTripA, limitTopM, limitBottomM, limitHystM])
@@ -222,28 +221,26 @@ export default function App() {
   }, [state.pos, doorOpen, state.limitTop, state.limitBottom])
 
   const onCmd = (c: 'up'|'down'|'stop'|'jam') => {
-  if (c === 'up' || c === 'down') {
-    // Bug 18: clear trip state when starting new motion
-    setState(s => ({...s, trip:'none'}))
-    setForceLimTop(false)
-    setForceLimBottom(false)
-    setRunMs(0)
-    setLap({active:true, startPos: state.pos, moved:false})
-  }
-  if ((c === 'up' && (state.limitTop || forceLimTop)) ||
-      (c === 'down' && (state.limitBottom || forceLimBottom))) {
-    engineRef.current?.command('stop')
-    return
-  }
-  if (c === 'jam') {
-    const newVal = !jamActive
-    setJamActive(newVal)
-    if (newVal) { engineRef.current?.command('stop') }
-    return
-  }
     if (c === 'up' || c === 'down') {
-    // Bug 18: clear trip state when starting new motion
-    setState(s => ({...s, trip:'none'}))
+      setState(s => ({...s, trip:'none'}))
+      setForceLimTop(false)
+      setForceLimBottom(false)
+      setRunMs(0)
+      setLap({active:true, startPos: state.pos, moved:false})
+    }
+    if ((c === 'up' && (state.limitTop || forceLimTop)) ||
+        (c === 'down' && (state.limitBottom || forceLimBottom))) {
+      engineRef.current?.command('stop')
+      return
+    }
+    if (c === 'jam') {
+      const newVal = !jamActive
+      setJamActive(newVal)
+      if (newVal) { engineRef.current?.command('stop') }
+      return
+    }
+    if (c === 'up' || c === 'down') {
+      setState(s => ({...s, trip:'none'}))
       setRunMs(0); setLap({active:true, startPos: state.pos, moved:false})
     }
     engineRef.current?.command(c)
@@ -254,7 +251,6 @@ export default function App() {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'ArrowUp') onCmd('up')
       if (e.key === 'ArrowDown') onCmd('down')
-      // stop key disabled
       if (e.key.toLowerCase() === 'p') setRunning(v=>!v)
     }
     window.addEventListener('keydown', onKey)
@@ -292,7 +288,7 @@ export default function App() {
             <button className="btn ghost" onClick={()=>{
               engineRef.current = new (SimEngine as any)(makeParams())
               engineRef.current?.setDoorOpen(doorOpen)
-                            setState(s=>({...s, t:0, pos:0, vel:0, accel:0, currentA:0, duty:0, dir:0, trip:'none'}))
+              setState(s=>({...s, t:0, pos:0, vel:0, accel:0, currentA:0, duty:0, dir:0, trip:'none'}))
               setRunMs(0); setLap({active:false, startPos:0, moved:false});
               buf.current = [];
               requestAnimationFrame(()=>{ const c = plotRef.current; if(c){ const ctx = c.getContext('2d')!; ctx.clearRect(0,0,c.width,c.height);} })
@@ -333,13 +329,21 @@ export default function App() {
               <div className="big">{(state.duty*100).toFixed(0)} %</div>
             </div>
             <div className="stat">
-              <h4>Extras</h4>
-              <div className="big">Motion: {state.dir>0?'UP':state.dir<0?'DOWN':'STOP'}</div>
-            </div>
-            <div className="stat">
               <h4>State</h4>
-              <div className={`big trip ${state.trip}`}>{ ((state.dir!==0 && state.currentA >= Math.round(hardTripA*0.8*10)/10)) ? 'DANGER' : String(state.trip).toUpperCase() }</div>
-              <small>dir: {state.dir>0?'up':state.dir<0?'down':'stop'}</small>
+              {(() => {
+                let color = 'text-gray-400'
+                if (state.trip === 'RUNNING') color = 'text-green-400'
+                else if (state.trip === 'PAUSED') color = 'text-yellow-400'
+                else if (state.trip === 'JAM') color = 'text-red-500'
+
+                const arrow = state.dir > 0 ? '↑' : state.dir < 0 ? '↓' : ''
+
+                return (
+                  <div className={`big font-bold ${color}`}>
+                    {String(state.trip).toUpperCase()} {arrow}
+                  </div>
+                )
+              })()}
             </div>
           </div>
 
@@ -385,7 +389,6 @@ export default function App() {
           </div>
         </section>
       </div>
-
 
       <footer className="footer">
         <div>UI rev 4 • limit switches • hold-at-limits • accel + run clock</div>
