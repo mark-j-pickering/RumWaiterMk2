@@ -112,19 +112,27 @@ export class SimEngine {
     this.state.limitTop = top || this.limitOverride.top
     this.state.limitBottom = bottom || this.limitOverride.bottom
 
-    // --- Current model: gravity + dynamic error (hybrid lively model) ---
-    const g = 9.81
-    const eff = 0.8
+	// --- Current model: gravity + dynamic error (hybrid lively model) ---
+	const g = 9.81
+	const eff = 0.8
 
-    const gravityForceN = this.params.massKg * g * (this.state.duty !== 0 ? 1 : 0)
-    const velError = (this.state.duty * this.params.targetSpeedMS - this.state.velMS)
-    const dynamicForceN = this.params.massKg * velError * 5   // gain tweak
+	// Gravity load only applies when lifting UP
+	const gravityForceN = this.state.dir > 0 ? this.params.massKg * g : 0
 
-    const totalForceN = gravityForceN * this.state.dir + dynamicForceN
-    const targetCurrent = Math.abs(totalForceN / g) / eff
+	// Velocity error = dynamic lively term
+	const velError = (this.state.duty * this.params.targetSpeedMS - this.state.velMS)
+	const dynamicForceN = this.params.massKg * velError * 5   // gain tweak
 
-    const tau = 0.1
-    this.state.currentA += (targetCurrent - this.state.currentA) * (ms / 1000) / tau
+	// Combine forces
+	const totalForceN = gravityForceN + dynamicForceN
+
+	// Convert to current
+	const targetCurrent = Math.abs(totalForceN / g) / eff
+
+	// Smooth ramp
+	const tau = 0.1
+	this.state.currentA += (targetCurrent - this.state.currentA) * (ms / 1000) / tau
+
 
     // --- Zero current if stopped at limits or duty off ---
     if ((this.state.limitTop && this.state.dir > 0) ||
