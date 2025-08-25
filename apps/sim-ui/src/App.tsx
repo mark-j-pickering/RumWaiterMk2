@@ -330,23 +330,28 @@ export default function App() {
             </div>
             <div className="stat">
               <h4>State</h4>
-              {(() => {
-                let color = 'text-gray-400'
-                if (state.trip === 'RUNNING') color = 'text-green-400'
-                else if (state.trip === 'PAUSED') color = 'text-yellow-400'
-                else if (state.trip === 'JAM') color = 'text-red-500'
-
-                const arrow = state.dir > 0 ? '↑' : state.dir < 0 ? '↓' : ''
-
-                return (
-                  <div className={`big font-bold ${color}`}>
-                    {String(state.trip).toUpperCase()} {arrow}
-                  </div>
-                )
-              })()}
-            </div>
+				{state.trip === 'RUNNING' && (
+				  <div className="big font-bold" style={{ color: 'green' }}>
+					RUNNING {state.dir > 0 ? '↑' : state.dir < 0 ? '↓' : ''}
+				  </div>
+				)}
+				{state.trip === 'PAUSED' && (
+				  <div className="big font-bold" style={{ color: 'goldenrod' }}>
+					PAUSED
+				  </div>
+				)}
+				{state.trip === 'JAM' && (
+				  <div className="big font-bold" style={{ color: 'red' }}>
+					JAM
+				  </div>
+				)}
+				{(state.trip !== 'RUNNING' && state.trip !== 'PAUSED' && state.trip !== 'JAM') && (
+				  <div className="big font-bold" style={{ color: 'gray' }}>
+					{String(state.trip).toUpperCase()}
+				  </div>
+				)}
+			</div>
           </div>
-
           <div className="canvas" style={{marginTop:12}}>
             <div className="legend">
               <span><i className="dot vel"></i>vel (m/s)</span>
