@@ -1,18 +1,14 @@
-# RUMWaiter Mk2 v1.4-step0 Patch Manifest
+# RUMWaiter Mk2 v1.4.0 Modern AVR8JS Patch
 
-This patch introduces the basic Arduino HEX emulator framework:
+This patch updates `packages/mcu-emu/cpuRunner.ts` to use the current avr8js API.
 
-## New Files
-- `packages/mcu-emu/hexLoader.ts`
-- `packages/mcu-emu/cpuRunner.ts`
-- `apps/sim-ui/src/components/HexLoader.tsx`
+## Changes
+- Replaced `AVRRunner` with `AVRCPU` + `avrInstruction` + `AVRIOPort`.
+- Tracks PORTD (pins 0-7) and PORTB (pins 8-13).
+- Adds console logs on start/stop.
+- Executes in a timed loop with `setTimeout`.
 
-## Modified Files
-- `packages/mcu-emu/index.ts`
-
-## Integration
-- Run the UI and use the new "Arduino HEX Loader" box to upload a `.hex` file.
-- Console will log PORTB pin changes (proof of life).
-- No motor physics or I2C integration yet.
-
-Next step: expand bridge to connect MCU pins ↔ sim-engine.
+## Next Steps
+1. Unzip into repo root (overwrite `packages/mcu-emu/cpuRunner.ts`).
+2. Run `pnpm --filter sim-ui dev`.
+3. Load a `.hex` (e.g. Blink.ino.hex) → Pin 13 LED should blink in GUI.

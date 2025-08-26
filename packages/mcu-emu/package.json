@@ -1,21 +1,11 @@
 {
-  "name": "@mcu-emu",
-  "version": "0.0.1",
+  "name": "mcu-emu",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "module": "index.ts",
+  "types": "index.ts",
   "private": true,
-  "type": "module",
-  "main": "dist/index.js",
-  "module": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "exports": {
-    ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    }
-  },
-  "scripts": {
-    "build": "tsc -p tsconfig.json"
-  },
-  "devDependencies": {
-    "typescript": "^5.5.0"
+  "dependencies": {
+    "avr8js": "0.14.0"
   }
 }

@@ -1,2 +1,2 @@
 export { flashHex } from "./hexLoader";
-export { startCpu, stopCpu } from "./cpuRunner";
+export { startCpu, stopCpu, subscribePins } from "./cpuRunner";

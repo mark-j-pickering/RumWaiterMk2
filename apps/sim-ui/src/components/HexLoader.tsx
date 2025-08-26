@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { startCpu } from "../../../packages/mcu-emu";
+import { startCpu, flashHex } from "mcu-emu";
 
 export const HexLoader: React.FC = () => {
   const [fileName, setFileName] = useState<string | null>(null);
@@ -7,9 +7,19 @@ export const HexLoader: React.FC = () => {
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
     setFileName(file.name);
+
+    // Read HEX file as text
     const text = await file.text();
-    startCpu(text);
+
+    // Parse HEX → Uint8Array
+    const program = flashHex(text);
+
+    console.log("✅ HEX parsed in HexLoader, program length:", program.length);
+
+    // Start emulator with compiled program
+    startCpu(program);
   };
 
   return (
@@ -17,7 +27,7 @@ export const HexLoader: React.FC = () => {
       <h3>Arduino HEX Loader</h3>
       <input type="file" accept=".hex" onChange={handleFile} />
       {fileName && <p>Loaded: {fileName}</p>}
-      <p>Check console logs for pin changes.</p>
+      <p>Check console logs for CPU start + pin updates.</p>
     </div>
   );
 };
