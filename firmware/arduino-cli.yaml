@@ -1,0 +1,9 @@
+board_manager:
+  additional_urls: []
+directories:
+  data: ./arduino-data
+  downloads: ./arduino-downloads
+  user: ./arduino-sketches
+library:
+  enable_unsafe_install: false
+sketchbook_path: ./examples

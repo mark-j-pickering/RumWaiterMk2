@@ -1,20 +1,18 @@
-# PATCH_MANIFEST.md — Full clean snapshot (v1.1)
+# RUMWaiter Mk2 v1.4-step0 Patch Manifest
 
-Code word: CRATE
-Generated: 2025-08-12T09:24:07
+This patch introduces the basic Arduino HEX emulator framework:
 
-This archive is a full snapshot of the current project state.
+## New Files
+- `packages/mcu-emu/hexLoader.ts`
+- `packages/mcu-emu/cpuRunner.ts`
+- `apps/sim-ui/src/components/HexLoader.tsx`
 
-Changed/Added
-- (entire repository)
+## Modified Files
+- `packages/mcu-emu/index.ts`
 
-DELETE THESE IF PRESENT (only if you hit stale builds)
-- packages/*/dist/        (build outputs)
-- packages/*/*.tsbuildinfo
-- apps/*/dist/
+## Integration
+- Run the UI and use the new "Arduino HEX Loader" box to upload a `.hex` file.
+- Console will log PORTB pin changes (proof of life).
+- No motor physics or I2C integration yet.
 
-Post-apply
-```
-pnpm install
-pnpm -r build && pnpm -w dev
-```
+Next step: expand bridge to connect MCU pins ↔ sim-engine.
